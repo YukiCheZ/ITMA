@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能计划管理表</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.js"></script>
+    <script src='https://fullcalendar.io/js/fullcalendar-3.9.0/locale/zh-cn.js'></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 左侧菜单 -->
+            <div class="col-3">
+                <h3>请选择内容</h3>
+                <select id="contentSelector" class="form-select">
+                    <option value="defalt_option">未选择</option>
+                    <option value="taskcalendar">计划表</option>
+                    <option value="llmagent">智能助手</option>
+                </select>
+            </div>
+
+            <!-- 右侧内容 -->
+            <div class="col-9">
+                <div id="dynamicContent">
+                    {% block content %}
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $('#contentSelector').change(function() {
+                var selectedValue = $(this).val();
+                $('#dynamicContent').load('/' + selectedValue);
+            });
+        });
+    </script>
+    
+    
+    
+</body>
+</html>

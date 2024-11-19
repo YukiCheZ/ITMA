@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with AI Agent</title>
+    <style>
+        /* 全局样式 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        h1 {
+            color: #444;
+        }
+
+        /* 聊天容器 */
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .chat-box {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* 输入框样式 */
+        #user_input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        /* 按钮样式 */
+        button {
+            padding: 12px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* 聊天响应框 */
+        #chat_response {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            min-height: 50px;
+            border: 1px solid #ddd;
+        }
+
+        /* 响应文本样式 */
+        .chatbot-response {
+            color: #555;
+            font-style: italic;
+        }
+    </style>
+    <script>
+        function getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]').value;
+        }
+
+        function sendMessage() {
+            let userInput = document.getElementById("user_input").value;
+
+            fetch("/llmagent/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": getCSRFToken()
+                },
+                body: "user_input=" + encodeURIComponent(userInput)
+            })
+            .then(response => {
+                if (response.redirected) {
+                    // 如果后端返回了重定向，手动跳转到新页面
+                    window.location.href = response.url;
+                } else {
+                    return response.json();
+                }
+            })
+            .then(data => {
+                if (data) {
+                    document.getElementById("chat_response").innerHTML =
+                        "<span class='chatbot-response'>Chatbot:</span> " + data.response;
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+        }
+
+    </script>
+</head>
+<body>
+    <h1>Chat with ChatGLM</h1>
+    <div class="chat-container">
+        <!-- CSRF Token -->
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        
+        <div class="chat-box">
+            <input type="text" id="user_input" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+        <div id="chat_response"></div>
+    </div>
+</body>
+</html>

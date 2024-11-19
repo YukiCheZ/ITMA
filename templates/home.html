@@ -1,0 +1,10 @@
+<!-- home.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<h1></h1>
+<h2>Welcome, {{ user.username }}!欢迎来到我的 Django 项目</h2>
+<p>从左侧下拉菜单中选择应用程序以加载内容。</p>
+<a href="{% url 'logout' %}">Logout</a>
+{% endblock %}
+

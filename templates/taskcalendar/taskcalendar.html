@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能计划管理助手</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.js"></script>
+    <script src="https://fullcalendar.io/js/fullcalendar-3.9.0/locale/zh-cn.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <div class="row">
+        <h4>计划管理表（添加计划： 选中右上方“日”视图以后，拖拽鼠标选取对应时间区域即可）</h4>
+        <!-- 这里是动态加载的内容 -->
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+    $(document).ready(function () {
+        // 只有当 #calendar 元素加载完毕后，才初始化 FullCalendar
+        var calendar = $('#calendar').fullCalendar({
+            // 初始化配置
+            customButtons: {
+                reportAddButton: {
+                    text: '添加',
+                    click: function () {
+                        alert('这是一个自定义按钮');
+                    }
+                },
+            },
+            header: {
+                left: 'prev,next today reportAddButton',
+                center: 'title',
+                right: 'month,agendaWeek,agendaDay'
+            },
+            events: '/all_events',
+            monthnames: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+            monthNamesShort: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+            dayNames: ["星期天", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
+            dayNamesShort: ["星期天", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
+            contentHeight: 650,
+            selectable: true,
+            selectHelper: true,
+            editable: true,
+            eventLimit: true,
+            timeZone: 'Asia/Shanghai',
+            locale: 'zh-cn',
+
+            eventRender: function (event, element) {
+                var startTime = event.start.format('H:mm');
+                var endTime = event.end ? event.end.format('H:mm') : startTime;
+                element.find('.fc-time').html(startTime + ' - ' + endTime);
+                element.find('.fc-title').html(event.title);
+            },
+
+            select: function (start, end, allDay) {
+                var title = prompt("Enter Event Title");
+                if (title) {
+                    var start = $.fullCalendar.formatDate(start, "Y-MM-DD HH:mm:ss");
+                    var end = $.fullCalendar.formatDate(end, "Y-MM-DD HH:mm:ss");
+                    $.ajax({
+                        type: "GET",
+                        url: '/add_event',
+                        data: {'title': title, 'start': start, 'end': end},
+                        dataType: "json",
+                        success: function (data) {
+                            calendar.fullCalendar('refetchEvents');
+                            alert("Added Successfully");
+                        },
+                        error: function (data) {
+                            alert('There is a problem!!!');
+                        }
+                    });
+                }
+            },
+
+            eventResize: function (event) {
+                var start = $.fullCalendar.formatDate(event.start, "Y-MM-DD HH:mm:ss");
+                var end = $.fullCalendar.formatDate(event.end, "Y-MM-DD HH:mm:ss");
+                var title = event.title;
+                var id = event.id;
+                $.ajax({
+                    type: "GET",
+                    url: '/update',
+                    data: {'title': title, 'start': start, 'end': end, 'id': id},
+                    dataType: "json",
+                    success: function (data) {
+                        calendar.fullCalendar('refetchEvents');
+                        alert('Event Update');
+                    },
+                    error: function (data) {
+                        alert('There is a problem!!!');
+                    }
+                });
+            },
+
+            eventDrop: function (event) {
+                var start = $.fullCalendar.formatDate(event.start, "Y-MM-DD HH:mm:ss");
+                var end = $.fullCalendar.formatDate(event.end, "Y-MM-DD HH:mm:ss");
+                var title = event.title;
+                var id = event.id;
+                $.ajax({
+                    type: "GET",
+                    url: '/update',
+                    data: {'title': title, 'start': start, 'end': end, 'id': id},
+                    dataType: "json",
+                    success: function (data) {
+                        calendar.fullCalendar('refetchEvents');
+                        alert('Event Update');
+                    },
+                    error: function (data) {
+                        alert('There is a problem!!!');
+                    }
+                });
+            },
+
+            eventClick: function (event) {
+                if (confirm("Are you sure you want to remove it?")) {
+                    var id = event.id;
+                    $.ajax({
+                        type: "GET",
+                        url: '/remove',
+                        data: {'id': id},
+                        dataType: "json",
+                        success: function (data) {
+                            calendar.fullCalendar('refetchEvents');
+                            alert('Event Removed');
+                        },
+                        error: function (data) {
+                            alert('There is a problem!!!');
+                        }
+                    });
+                }
+            },
+        });
+    });
+</script>
+
+</body>
+</html>
