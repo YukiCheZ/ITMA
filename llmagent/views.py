@@ -1,13 +1,21 @@
-from django.shortcuts import render, redirect
-from .forms import APIKeyForm
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from .models import APIKey
-from django.http import JsonResponse
-from zhipuai import ZhipuAI
-from django.views.decorators.csrf import csrf_exempt
-from .prompts import *
+import re
 
+import json
+import requests
+
+from django.urls import reverse
+from django.contrib import messages
+from django.http import JsonResponse
+from django.contrib.sites.models import Site
+from django.shortcuts import render, redirect
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+
+from zhipuai import ZhipuAI
+
+from .prompts import *
+from .models import APIKey
+from .forms import APIKeyForm
 
 @login_required
 def set_api_key(request):
@@ -50,8 +58,42 @@ def chatglm_view(request):
             ],
         )
         # print(response.choices[0].message) # for debug
-        print(llm_process_event_prompt) # for debug
-        return JsonResponse({"response": response.choices[0].message.content})
+        # print(llm_process_event_prompt) # for debug
+        try:
+            update_calendar_with_model_response(response.choices[0].message.content) 
+            return JsonResponse({"response": f"成功更新计划表，请检查！我的安排为：{response.choices[0].message.content}"})
+        
+        except Exception as e:
+            return JsonResponse({"error": "大模型信息解析错误，请用户检查输入信息是否有误。"}, status=400)
 
     return render(request, 'llmagent/chat.html')
 
+
+@csrf_exempt
+def update_calendar_with_model_response(model_responses):
+    # 获取当前站点域名
+    # current_site = Site.objects.get_current()
+    # base_url = f"http://{current_site.domain}"  # 动态获取域名
+    base_url = "http://127.0.0.1:8000"
+    # 动态获取 API 路径
+    api_path = reverse('update_events_by_llm')
+    full_url = f"{base_url}{api_path}"
+
+    # 发送请求
+    headers = {"Content-Type": "application/json"}
+
+    pattern = "```json(.*?)```"
+    clean_responses =  re.findall(pattern, model_responses, re.DOTALL)[0]
+    clean_responses = json.loads(clean_responses)
+    print(clean_responses)
+    for index, model_response in enumerate(clean_responses):
+        print(f'{index}: ', model_response)
+        response = requests.post(full_url, headers=headers, json=model_response)
+        print(full_url)
+        print(response)
+        if response.status_code == 201:
+            print("Event created successfully")
+        elif response.status_code == 200:
+            print("Event already exists")
+        else:
+            print(f"Failed to update calendar")

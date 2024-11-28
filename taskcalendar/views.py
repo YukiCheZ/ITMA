@@ -1,12 +1,11 @@
+import json
+
+from django.views import View
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
 from .models import Events
-from django.shortcuts import render
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib import messages
-from django.shortcuts import render, redirect
 
 
 def taskcalendar(request):
@@ -76,3 +75,38 @@ def remove(request):
     data = {}
     # return JsonResponse(data, status=403)
     return JsonResponse(data)
+
+
+from django.utils.decorators import method_decorator
+@method_decorator(csrf_exempt, name='dispatch')
+class UpdateEventsView(View):
+    def post(self, request, *args, **kwargs):
+        print("Enter!!!!")
+        try:
+            data = json.loads(request.body)
+
+            try:
+                title = data.get("title")
+                start = data.get("start")
+                end = data.get("end")
+                # for debug:
+                print(f"Title: {title}")
+                print(f"Start: {start}")
+                print(f"End: {end}")    
+            except Exception as e:
+                return JsonResponse({"error": "大模型信息解析错误，请用户检查输入信息是否有误。"}, status=400)
+
+            event, created = Events.objects.get_or_create(
+                name=title, 
+                start=start, 
+                end=end,
+                defaults={"finished": False}
+            )
+
+            if created:
+                return JsonResponse({"message": "事件创建成功"}, status=201)
+            else:
+                return JsonResponse({"message": "事件创建失败，事件已经存在"}, status=200)
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
