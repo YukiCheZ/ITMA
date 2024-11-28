@@ -72,9 +72,9 @@ def chatglm_view(request):
 @csrf_exempt
 def update_calendar_with_model_response(model_responses):
     # 获取当前站点域名
-    # current_site = Site.objects.get_current()
+    # current_site = Site.objects.get_current() # 这个目前看下来，需要到django的admin界面里面设置
     # base_url = f"http://{current_site.domain}"  # 动态获取域名
-    base_url = "http://127.0.0.1:8000"
+    base_url = "http://127.0.0.1:8000" # for debug and test
     # 动态获取 API 路径
     api_path = reverse('update_events_by_llm')
     full_url = f"{base_url}{api_path}"
@@ -82,10 +82,10 @@ def update_calendar_with_model_response(model_responses):
     # 发送请求
     headers = {"Content-Type": "application/json"}
 
-    pattern = "```json(.*?)```"
+    pattern = "```json(.*?)```" # 大模型生成的回复有这个前后缀
     clean_responses =  re.findall(pattern, model_responses, re.DOTALL)[0]
     clean_responses = json.loads(clean_responses)
-    print(clean_responses)
+    # print(clean_responses)
     for index, model_response in enumerate(clean_responses):
         print(f'{index}: ', model_response)
         response = requests.post(full_url, headers=headers, json=model_response)
