@@ -7,7 +7,6 @@ from system import views as system_views
 from llmagent import views as llmagent_views
 
 from taskcalendar import views as taskcalendar_views
-from taskcalendar.views import UpdateEventsView
 
 urlpatterns = [
     path('', lambda request: redirect('login')),
@@ -26,6 +25,4 @@ urlpatterns = [
 
     path('llmagent/', llmagent_views.chatglm_view, name='llmagent'),
     path('set_api_key/', llmagent_views.set_api_key, name='set_api_key'), 
-
-    path('update_events_by_llm/', UpdateEventsView.as_view(), name='update_events_by_llm'),
 ]

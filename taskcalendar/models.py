@@ -1,4 +1,3 @@
-# Create your models here.
 from django.db import models
  
 class Events(models.Model):
@@ -10,3 +9,17 @@ class Events(models.Model):
     
     class Meta:
         db_table = "tblevents"
+        
+    @classmethod
+    def get_all_events(cls):
+        all_events = cls.objects.all()
+        out = []
+        for event in all_events:
+            out.append({
+                'title': event.name,
+                'id': event.id,
+                'start': event.start.strftime("%m/%d/%Y, %H:%M:%S"),
+                'end': event.end.strftime("%m/%d/%Y, %H:%M:%S"),
+                'finished': event.finished,
+            })
+        return out 

@@ -3,10 +3,9 @@ import re
 import json
 import requests
 
-from django.urls import reverse
+from django.utils import timezone
 from django.contrib import messages
 from django.http import JsonResponse
-from django.contrib.sites.models import Site
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -15,6 +14,7 @@ from zhipuai import ZhipuAI
 
 from .prompts import *
 from .models import APIKey
+from taskcalendar.models import Events
 from .forms import APIKeyForm
 
 @login_required
@@ -50,18 +50,26 @@ def chatglm_view(request):
         except APIKey.DoesNotExist:
             return redirect('set_api_key')
         client = ZhipuAI(api_key=api_key) 
+        exist_events =  Events.get_all_events()
+        # print("exist_events:", exist_events)
+        # print('llm_create_event_prompt:', llm_create_event_prompt)
         response = client.chat.completions.create(
             model="glm-4-flash",
             messages=[
-                {"role": "system", "content": llm_process_event_prompt},
+                {"role": "system", "content": llm_create_event_prompt},
                 {"role": "user", "content": user_input}
             ],
         )
         # print(response.choices[0].message) # for debug
         # print(llm_process_event_prompt) # for debug
+        arrangements = response.choices[0].message.content
+        pattern = "```json(.*?)```" # 大模型生成的回复有这个前后缀
+        arrangements =  re.findall(pattern, arrangements, re.DOTALL)[0]
+        arrangements = json.loads(arrangements)
+
         try:
-            update_calendar_with_model_response(response.choices[0].message.content) 
-            return JsonResponse({"response": f"成功更新计划表，请检查！我的安排为：{response.choices[0].message.content}"})
+            update_calendar_with_model_response(arrangements) 
+            return JsonResponse({"response": f"成功更新计划表，请检查！我的安排为：{arrangements}"})
         
         except Exception as e:
             return JsonResponse({"error": "大模型信息解析错误，请用户检查输入信息是否有误。"}, status=400)
@@ -69,31 +77,50 @@ def chatglm_view(request):
     return render(request, 'llmagent/chat.html')
 
 
-@csrf_exempt
 def update_calendar_with_model_response(model_responses):
-    # 获取当前站点域名
-    # current_site = Site.objects.get_current() # 这个目前看下来，需要到django的admin界面里面设置
-    # base_url = f"http://{current_site.domain}"  # 动态获取域名
-    base_url = "http://127.0.0.1:8000" # for debug and test
-    # 动态获取 API 路径
-    api_path = reverse('update_events_by_llm')
-    full_url = f"{base_url}{api_path}"
+    try:
+        datas = model_responses
+        for data in datas:
+            try:
+                title = data.get("title")
+                start = datetime.strptime(data.get("start"), "%Y-%m-%d %H:%M:%S")
+                end = datetime.strptime(data.get("end"), "%Y-%m-%d %H:%M:%S")
+            
+            except Exception as e:
+                raise e
+        
+            # overlap_events = check_time_overlap(start, end)
+            # if check_time_overlap(start, end).exists():
+            #     conflict_events = [
+            #         {
+            #             "id": event.id,
+            #             "title": event.name,
+            #             "start": event.start.strftime("%m/%d/%Y, %H:%M:%S"),
+            #             "end": event.end.strftime("%m/%d/%Y, %H:%M:%S"),
+            #             "finished": event.finished,
+            #         }
+            #         for event in overlap_events
+            #     ]
+            #     return JsonResponse({"error": "时间段与已有事件重叠，请检查！", "conflict_events": conflict_events}, status=400)
+            start_aware = timezone.make_aware(start) if start else None
+            end_aware = timezone.make_aware(end) if end else None
+            event, created = Events.objects.get_or_create(
+                name=title,
+                start=start_aware,  
+                end=end_aware,     
+                defaults={"finished": False}
+            )
+            print("event ", event)
+        
+    except Exception as e:
+        raise e
+        
 
-    # 发送请求
-    headers = {"Content-Type": "application/json"}
-
-    pattern = "```json(.*?)```" # 大模型生成的回复有这个前后缀
-    clean_responses =  re.findall(pattern, model_responses, re.DOTALL)[0]
-    clean_responses = json.loads(clean_responses)
-    # print(clean_responses)
-    for index, model_response in enumerate(clean_responses):
-        print(f'{index}: ', model_response)
-        response = requests.post(full_url, headers=headers, json=model_response)
-        print(full_url)
-        print(response)
-        if response.status_code == 201:
-            print("Event created successfully")
-        elif response.status_code == 200:
-            print("Event already exists")
-        else:
-            print(f"Failed to update calendar")
+from django.db.models import Q
+def check_time_overlap(start, end):
+    # 判断是否有事件与给定时间段重叠
+    overlap = Events.objects.filter(
+        Q(start__lt=end) &  # 新事件的开始时间早于已有事件的结束时间
+        Q(end__gt=start)    # 新事件的结束时间晚于已有事件的开始时间
+    )
+    return overlap
