@@ -1,7 +1,5 @@
 import re
-
 import json
-import requests
 
 from django.utils import timezone
 from django.contrib import messages

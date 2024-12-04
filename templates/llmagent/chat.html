@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat with AI Agent</title>
+    <title>请您输入您的需求</title>
     <style>
         /* 全局样式 */
         body {
@@ -121,14 +121,14 @@
     </script>
 </head>
 <body>
-    <h1>Chat with ChatGLM</h1>
+    <h1>智能计划管理助手</h1>
     <div class="chat-container">
         <!-- CSRF Token -->
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
         
         <div class="chat-box">
-            <input type="text" id="user_input" placeholder="Type a message...">
-            <button onclick="sendMessage()">Send</button>
+            <input type="text" id="user_input" placeholder="请输入您的请求...">
+            <button onclick="sendMessage()">发送</button>
         </div>
         <div id="chat_response"></div>
     </div>
