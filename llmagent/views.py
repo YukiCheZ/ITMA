@@ -47,35 +47,46 @@ def chatglm_view(request):
             api_key = APIKey.objects.get(user=request.user).api_key 
         except APIKey.DoesNotExist:
             return redirect('set_api_key')
+        
         client = ZhipuAI(api_key=api_key) 
-        exist_events =  Events.get_all_events()
+        exist_events =  Events.get_all_events(request.user)
         # print("exist_events:", exist_events)
         # print('llm_create_event_prompt:', llm_create_event_prompt)
-        response = client.chat.completions.create(
+        response_preprocess = client.chat.completions.create(
             model="glm-4-flash",
             messages=[
-                {"role": "system", "content": llm_create_event_prompt},
+                {"role": "system", "content": llm_select_option_prompt},
                 {"role": "user", "content": user_input}
             ],
         )
-        # print(response.choices[0].message) # for debug
-        # print(llm_process_event_prompt) # for debug
-        arrangements = response.choices[0].message.content
-        pattern = "```json(.*?)```" # 大模型生成的回复有这个前后缀
-        arrangements =  re.findall(pattern, arrangements, re.DOTALL)[0]
-        arrangements = json.loads(arrangements)
+        # print(response_preprocess.choices[0].message) # for debug
+        if response_preprocess.choices[0].message.content == "新增":
+            response = client.chat.completions.create(
+                model="glm-4-flash",
+                messages=[
+                    {"role": "system", "content": llm_create_event_prompt + f"目前已经有的安排是这样的（请不要与已有安排的时间重复）:{exist_events}"},
+                    {"role": "user", "content": user_input}
+                ],
+            )
+            print(llm_create_event_prompt + f"目前已经有的安排是这样的（请不要与已有安排的时间重复）:{exist_events}")
+            print(response.choices[0].message) # for debug
+            # print(llm_process_event_prompt) # for debug
+            arrangements = response.choices[0].message.content
+            pattern = "```json(.*?)```" # 大模型生成的回复有这个前后缀
+            arrangements =  re.findall(pattern, arrangements, re.DOTALL)[0]
+            arrangements = json.loads(arrangements)
 
-        try:
-            update_calendar_with_model_response(arrangements) 
-            return JsonResponse({"response": f"成功更新计划表，请检查！我的安排为：{arrangements}"})
-        
-        except Exception as e:
-            return JsonResponse({"error": "大模型信息解析错误，请用户检查输入信息是否有误。"}, status=400)
-
+            try:
+                create_events_with_model_response(arrangements, request.user) 
+                return JsonResponse({"response": f"成功更新计划表，请检查！我的安排为：{arrangements}"})
+            
+            except Exception as e:
+                return JsonResponse({"error": "大模型信息解析错误，请用户检查输入信息是否有误。"}, status=400)
+    
     return render(request, 'llmagent/chat.html')
 
 
-def update_calendar_with_model_response(model_responses):
+def create_events_with_model_response(model_responses, user):
     try:
         datas = model_responses
         for data in datas:
@@ -102,12 +113,15 @@ def update_calendar_with_model_response(model_responses):
             #     return JsonResponse({"error": "时间段与已有事件重叠，请检查！", "conflict_events": conflict_events}, status=400)
             start_aware = timezone.make_aware(start) if start else None
             end_aware = timezone.make_aware(end) if end else None
+
             event, created = Events.objects.get_or_create(
+                user=user,
                 name=title,
                 start=start_aware,  
                 end=end_aware,     
                 defaults={"finished": False}
             )
+
             print("event ", event)
         
     except Exception as e:
@@ -122,3 +136,8 @@ def check_time_overlap(start, end):
         Q(end__gt=start)    # 新事件的结束时间晚于已有事件的开始时间
     )
     return overlap
+
+
+def remove_event_with_model_response(model_responses):
+
+    pass 

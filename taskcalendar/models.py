@@ -1,6 +1,8 @@
 from django.db import models
+from django.contrib.auth.models import User
  
 class Events(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, null=True, blank=True)
     start = models.DateTimeField(null=True, blank=True)
@@ -9,10 +11,10 @@ class Events(models.Model):
     
     class Meta:
         db_table = "tblevents"
-        
+    
     @classmethod
-    def get_all_events(cls):
-        all_events = cls.objects.all()
+    def get_all_events(cls, user):
+        all_events = cls.objects.filter(user=user)
         out = []
         for event in all_events:
             out.append({
@@ -22,4 +24,5 @@ class Events(models.Model):
                 'end': event.end.strftime("%m/%d/%Y, %H:%M:%S"),
                 'finished': event.finished,
             })
-        return out 
+        return out
+    
