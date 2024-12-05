@@ -5,6 +5,10 @@ from taskcalendar.models import Events
 
 user_timezone = pytz.timezone("Asia/Shanghai") # 用户的时区
 formatted_time = datetime.now(user_timezone).strftime("%Y-%m-%d %H:%M:%S")
+weekday_map = {
+    0: "星期一", 1: "星期二", 2: "星期三", 3: "星期四", 4: "星期五", 5: "星期六", 6: "星期天"
+}
+weekday = weekday_map[datetime.now(user_timezone).weekday()]
 
 llm_select_option_prompt = (
         "请你根据用户输入的文字判断用户需求是否属于以下需求之一："
@@ -22,7 +26,7 @@ update_select_option_prompt = (
 )# 目前还没实现和历史数据交互的功能
 
 llm_create_event_prompt = (
-        f"你是一个专业的日程规划助手，请注意现在的时间是 {formatted_time}。"
+        f"你是一个专业的日程规划助手，请注意现在的时间是 {formatted_time} {weekday}。"
         "根据用户提供的需求，生成符合要求的日程计划。返回的结果必须是 ```json``` 格式（json格式的列表，每个计划分别为一个字典元素），包含以下字段："
         "1. title（字符串，表示事件标题，例如'团队会议'）;"
         "2. start（例如'2024-11-18 09:00:00'）;"
