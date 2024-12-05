@@ -22,6 +22,7 @@ urlpatterns = [
     path('add_event/', taskcalendar_views.add_event, name='add_event'),
     path('update/', taskcalendar_views.update, name='update'),
     path('remove/', taskcalendar_views.remove, name='remove'),
+    path('mark_completed/', taskcalendar_views.mark_completed, name='mark_completed'),
 
     path('llmagent/', llmagent_views.chatglm_view, name='llmagent'),
     path('set_api_key/', llmagent_views.set_api_key, name='set_api_key'), 

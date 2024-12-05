@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -58,6 +58,18 @@ def remove(request):
     # return JsonResponse(data, status=403)
     return JsonResponse(data)
 
+@csrf_exempt 
+def mark_completed(request):
+    event_id = request.POST.get("id", None)
+    if not event_id:
+        return JsonResponse({'error': 'Event ID is required'}, status=400)
+    event = get_object_or_404(Events, id=event_id)
+    if event.user != request.user:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    event.finished = True
+    event.save()
+    return JsonResponse({'message': 'Event marked as completed successfully'}, status=200)
 
 
 

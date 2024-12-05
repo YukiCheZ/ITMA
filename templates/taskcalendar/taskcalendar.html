@@ -21,6 +21,11 @@
     </div>
 </div>
 
+<div id="contextMenu" class="dropdown-menu" style="position:absolute; display:none; z-index:1000;">
+    <button id="deleteEvent" class="dropdown-item">删除</button>
+    <button id="markCompleted" class="dropdown-item">标记为已完成</button>
+</div>
+
 <!-- JavaScript -->
 <script>
     $(document).ready(function () {
@@ -58,6 +63,15 @@
                 var endTime = event.end ? event.end.format('H:mm') : startTime;
                 element.find('.fc-time').html(startTime + ' - ' + endTime);
                 element.find('.fc-title').html(event.title);
+
+                // 确保每个事件只绑定一次右键菜单逻辑
+                if (!element.data('contextMenuBound')) {
+                    element.on('contextmenu', function (e) {
+                        e.preventDefault(); // 禁用浏览器默认右键菜单
+                        showContextMenu(e, event);
+                    });
+                    element.data('contextMenuBound', true); // 设置标记
+                }
             },
 
             select: function (start, end, allDay) {
@@ -140,6 +154,66 @@
                 }
             },
         });
+        // 显示右键菜单
+        function showContextMenu(e, calendarEvent) {
+            const menu = $('#contextMenu');
+            menu.css({
+                top: e.pageY,  // 设置菜单显示位置
+                left: e.pageX,
+                display: 'block', // 显示菜单
+            });
+
+            // 绑定“删除”按钮事件
+            $('#deleteEvent').off('click').on('click', function () {
+                const id = calendarEvent.id;
+                $.ajax({
+                    type: "GET",
+                    url: '/remove',
+                    data: {'id': id},
+                    dataType: "json",
+                    success: function (data) {
+                        $('#calendar').fullCalendar('refetchEvents');
+                        alert('Event Removed');
+                    },
+                    error: function (data) {
+                        alert('There is a problem!!!');
+                    }
+                });
+                menu.hide(); // 隐藏菜单
+            });
+
+            // 绑定“标记为已完成”按钮事件
+            $('#markCompleted').off('click').on('click', function () {
+                const id = calendarEvent.id;
+                $.ajax({
+                    type: "POST",
+                    url: '/mark_completed/',
+                    data: {'id': id},
+                    dataType: "json",
+                    headers: {
+                        'X-CSRFToken': $('meta[name="csrf-token"]').attr('content') // 确保传递 CSRF Token
+                    },
+                    success: function (data) {
+                        $('#calendar').fullCalendar('refetchEvents');
+                        alert('Event Marked as Completed');
+                        $(`.fc-event[data-id=${id}]`).css('background-color', 'lightgreen'); // 更改事件颜色
+                    },
+                    error: function (data) {
+                        alert('There is a problem!!!');
+                    }
+                });
+                menu.hide(); // 隐藏菜单
+            });
+        }
+        // 点击文档任何地方隐藏菜单
+        $(document).on('click', function (event) {
+            const menu = $('#contextMenu');
+            if (!$(event.target).closest('#contextMenu').length) {
+                menu.hide(); // 确保点击非菜单区域时隐藏菜单
+            }
+        });
+
+
     });
 </script>
 
