@@ -17,6 +17,7 @@ from taskcalendar.models import Events
 from .forms import APIKeyForm
 
 temporal_history = list()
+openai_model = "gpt-4o"
 
 @login_required
 def set_api_key(request):
@@ -67,7 +68,7 @@ def chatglm_view(request):
 
         if response_preprocess.choices[0].message.content == "新增":
             response = openai_client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=openai_model,
                 messages=[
                     {"role": "system", "content": llm_create_event_prompt + f"目前已经有的安排是这样的（请不要与已有安排的时间重复）:{exist_events}"},
                     {"role": "user", "content": user_input}
@@ -115,7 +116,7 @@ def chatglm_view(request):
                 )
                 
                 response = openai_client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model=openai_model,
                     messages=[
                         {"role": "system", "content": llm_prompt},
                         {"role": "user", "content": user_input}
@@ -132,7 +133,7 @@ def chatglm_view(request):
                     f":{exist_events}"
                 )
                 response = openai_client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model=openai_model,
                     messages=[
                         {"role": "system", "content": llm_prompt},
                         {"role": "user", "content": user_input}
@@ -161,7 +162,7 @@ def chatglm_view(request):
         if response_preprocess.choices[0].message.content == "删除":
             print("删除")
             response = openai_client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=openai_model,
                 messages=[
                     {"role": "system", "content": llm_remove_event_prompt + f"目前已经有的安排是这样的:{exist_events}"},
                     {"role": "user", "content": user_input}
