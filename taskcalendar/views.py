@@ -58,6 +58,7 @@ def remove(request):
     # return JsonResponse(data, status=403)
     return JsonResponse(data)
 
+
 @csrf_exempt 
 def mark_completed(request):
     event_id = request.POST.get("id", None)
