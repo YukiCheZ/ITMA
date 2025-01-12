@@ -80,13 +80,6 @@ def chatglm_view(request):
             arrangements = response.choices[0].message.content
             pattern = "```json(.*?)```" # 大模型生成的回复有这个前后缀
             arrangements =  re.findall(pattern, arrangements, re.DOTALL)[0].strip().replace("/", "-")
-            temporal_history.append(
-                dict(
-                    round = len(temporal_history) + 1,
-                    user_input = user_input,
-                    response = arrangements 
-                )
-            )
             arrangements = json.loads(arrangements)
             try:
                 create_events_with_model_response(arrangements, request.user) 
@@ -94,71 +87,7 @@ def chatglm_view(request):
             
             except Exception as e:
                 return JsonResponse({"error": "大模型信息解析错误，请用户检查输入信息是否有误。"}, status=400)
-            
-
-        if response_preprocess.choices[0].message.content == "更新":
-            print("更新")
-            update_method = zhipu_client.chat.completions.create(
-                model="glm-4-flash",
-                messages=[
-                    {"role": "system", "content": update_select_option_prompt},
-                    {"role": "user", "content": user_input}
-                ],
-            )
-            print("update_method:", update_method.choices[0].message.content)
-            # 这个功能为TODO，待实现，应该需要把历史记录存在数据库中
-            if update_method.choices[0].message.content == "需要" and len(temporal_history) != 0:
-                print("需要调用对话历史")
-                llm_prompt = (
-                    f"{llm_update_event_prompt}"
-                    f"目前已经有的安排是这样的（请不要与已有安排的时间重复）:{exist_events}"
-                    f"其中，你之前一轮的对话给出的结果为：{temporal_history[-1].response}"
-                )
-                
-                response = openai_client.chat.completions.create(
-                    model=openai_model,
-                    messages=[
-                        {"role": "system", "content": llm_prompt},
-                        {"role": "user", "content": user_input}
-                    ]
-                )
-                print("llm_prompt:", llm_prompt)
-                
-
-            elif update_method.choices[0].message.content == "不需要":
-                print("不需要调用对话历史")
-                llm_prompt = (
-                    f"{llm_update_event_prompt}"
-                    f"你需要从已有的安排里面挑选用户指定的计划进行更新，目前已经有的安排是这样的（请不要与已有安排的时间重复）"
-                    f":{exist_events}"
-                )
-                response = openai_client.chat.completions.create(
-                    model=openai_model,
-                    messages=[
-                        {"role": "system", "content": llm_prompt},
-                        {"role": "user", "content": user_input}
-                    ]
-                )
-                print(llm_prompt)
-            
-            arrangements = response.choices[0].message.content
-            # print(arrangements)
-            pattern = "```json(.*?)```" # 大模型生成的回复有这个前后缀
-            before =  re.findall(pattern, arrangements, re.DOTALL)[0].strip().replace("/", "-")
-            after = re.findall(pattern, arrangements, re.DOTALL)[1].strip().replace("/", "-")
-            # print(before)
-            # print(after)
-            before = json.loads(before)
-            after = json.loads(after)
-            print("原有的计划： ", before)
-            print("更新后的计划：",after)
-            try:
-                remove_events_with_model_response(before, request.user)
-                create_events_with_model_response(after, request.user)
-                return JsonResponse({"response": f"成功更新计划表，请检查！原有的计划为：{before}，更新后的计划为：{after}"})
-            except Exception as e:
-                return JsonResponse({"error": "大模型信息解析错误，请用户检查输入信息是否有误。"}, status=400)
-            
+        
         if response_preprocess.choices[0].message.content == "删除":
             print("删除")
             response = openai_client.chat.completions.create(
@@ -180,6 +109,39 @@ def chatglm_view(request):
             except Exception as e:
                 return JsonResponse({"error": "大模型信息解析错误，请用户检查输入信息是否有误。"}, status=400)
 
+        if response_preprocess.choices[0].message.content == "更新":
+            print("更新")
+            llm_prompt = (
+                f"{llm_update_event_prompt}"
+                f"你需要从已有的安排里面挑选用户指定的计划进行更新，目前已经有的安排是这样的（请不要与已有安排的时间重复）"
+                f":{exist_events}"
+            )
+            response = openai_client.chat.completions.create(
+                model=openai_model,
+                messages=[
+                    {"role": "system", "content": llm_prompt},
+                    {"role": "user", "content": user_input}
+                ]
+            )
+            print(llm_prompt)
+        
+        arrangements = response.choices[0].message.content
+        # print(arrangements)
+        pattern = "```json(.*?)```" # 大模型生成的回复有这个前后缀
+        before =  re.findall(pattern, arrangements, re.DOTALL)[0].strip().replace("/", "-")
+        after = re.findall(pattern, arrangements, re.DOTALL)[1].strip().replace("/", "-")
+        # print(before)
+        # print(after)
+        before = json.loads(before)
+        after = json.loads(after)
+        print("原有的计划： ", before)
+        print("更新后的计划：",after)
+        try:
+            remove_events_with_model_response(before, request.user)
+            create_events_with_model_response(after, request.user)
+            return JsonResponse({"response": f"成功更新计划表，请检查！原有的计划为：{before}，更新后的计划为：{after}"})
+        except Exception as e:
+            return JsonResponse({"error": "大模型信息解析错误，请用户检查输入信息是否有误。"}, status=400)
         
     return render(request, 'llmagent/chat.html')
 
