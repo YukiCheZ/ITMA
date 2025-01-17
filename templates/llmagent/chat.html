@@ -68,6 +68,12 @@
             background-color: #45a049;
         }
 
+        /* 禁用按钮样式 */
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
         /* 聊天响应框 */
         #chat_response {
             background-color: #f9f9f9;
@@ -82,6 +88,14 @@
             color: #555;
             font-style: italic;
         }
+
+        /* 等待提示样式 */
+        #loading {
+            display: none;  /* 默认隐藏 */
+            font-size: 16px;
+            color: #888;
+            margin-bottom: 10px;
+        }
     </style>
     <script>
         function getCSRFToken() {
@@ -90,6 +104,13 @@
 
         function sendMessage() {
             let userInput = document.getElementById("user_input").value;
+
+            // 显示等待提示
+            document.getElementById("loading").style.display = 'block';
+            document.getElementById("chat_response").innerHTML = '';  // 清空响应框
+
+            // 禁用发送按钮
+            document.querySelector("button").disabled = true;
 
             fetch("/llmagent/", {
                 method: "POST",
@@ -108,20 +129,37 @@
                 }
             })
             .then(data => {
+                // 隐藏等待提示
+                document.getElementById("loading").style.display = 'none';
+
+                // 启用发送按钮
+                document.querySelector("button").disabled = false;
+
                 if (data) {
                     document.getElementById("chat_response").innerHTML =
                         "<span class='chatbot-response'>Chatbot:</span> " + data.response;
                 }
             })
             .catch(error => {
+                // 隐藏等待提示
+                document.getElementById("loading").style.display = 'none';
+
+                // 启用发送按钮
+                document.querySelector("button").disabled = false;
+
                 console.error("Error:", error);
+                document.getElementById("chat_response").innerHTML =
+                    "<span class='chatbot-response' style='color: red;'>发生错误，请稍后再试。</span>";
             });
         }
-
     </script>
 </head>
 <body>
     <h1>智能计划管理助手</h1>
+    
+    <!-- 等待提示 -->
+    <div id="loading">等待模型回复...</div>
+
     <div class="chat-container">
         <!-- CSRF Token -->
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
