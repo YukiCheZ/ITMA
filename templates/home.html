@@ -1,10 +1,39 @@
-<!-- home.html -->
 {% extends 'base.html' %}
 
 {% block content %}
-<h1></h1>
-<h2>Welcome, {{ user.username }}!欢迎使用智能计划管理助手</h2>
-<p>从左侧下拉菜单中选择应用程序以加载内容。<br> 选择智能助手以通过聊天来实现计划设置。</p>
-<a href="{% url 'logout' %}">Logout</a>
+<div class="container">
+    <!-- 页面中央内容 -->
+    <div class="center-content">
+        <h2>Welcome, {{ user.username }}!</h2>
+        <h2>欢迎使用智能计划管理助手</h2>
+        <p>从左上角下拉菜单中选择应用程序以加载内容。<br> 选择智能助手以通过聊天来实现计划设置。</p>
+    </div>
+
+    <!-- 登出按钮 -->
+    <button id="logoutUserBtn" class="logout-btn" style="background-color: #4CAF50;">登出</button>
+
+    <!-- 注销账户按钮 -->
+    <button id="deleteUserBtn" class="delete-btn" style="background-color: #f44336;">注销</button>
+</div>
+
+<!-- 确认操作的弹出框 -->
+<script>
+    // 处理登出按钮
+    document.getElementById('logoutUserBtn').addEventListener('click', function() {
+        // 弹出确认框
+        if (confirm("是否确定登出当前用户？")) {
+            window.location.href = "{% url 'logout' %}";
+        }
+    });
+
+    // 处理注销账户按钮
+    document.getElementById('deleteUserBtn').addEventListener('click', function() {
+        // 弹出确认框
+        if (confirm("是否确定注销当前用户？注销后将删除您的所有数据。")) {
+            window.location.href = "{% url 'delete_user_data' %}";
+        }
+    });
+</script>
 {% endblock %}
+
 

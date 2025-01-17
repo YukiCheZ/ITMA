@@ -12,11 +12,6 @@
             color: #333;
             margin: 0;
             padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
         }
 
         h1 {
@@ -95,6 +90,21 @@
             font-size: 16px;
             color: #888;
             margin-bottom: 10px;
+            position: absolute; /* 绝对定位 */
+            top: 50%; /* 居中显示 */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        /* 聊天容器居中 */
+        .chat-container-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
     </style>
     <script>
@@ -155,20 +165,21 @@
     </script>
 </head>
 <body>
-    <h1>智能计划管理助手</h1>
-    
     <!-- 等待提示 -->
     <div id="loading">等待模型回复...</div>
 
-    <div class="chat-container">
-        <!-- CSRF Token -->
-        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-        
-        <div class="chat-box">
-            <input type="text" id="user_input" placeholder="请输入您的请求...">
-            <button onclick="sendMessage()">发送</button>
+    <!-- 对话框居中 -->
+    <div class="chat-container-wrapper">
+        <div class="chat-container">
+            <!-- CSRF Token -->
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+            <div class="chat-box">
+                <input type="text" id="user_input" placeholder="请输入您的请求...">
+                <button onclick="sendMessage()">发送</button>
+            </div>
+            <div id="chat_response"></div>
         </div>
-        <div id="chat_response"></div>
     </div>
 </body>
 </html>

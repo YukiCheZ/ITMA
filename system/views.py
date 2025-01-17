@@ -3,6 +3,9 @@ from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
+from taskcalendar.models import Events
+from llmagent.models import APIKey
+
 
 @login_required
 def home(request):
@@ -38,3 +41,18 @@ def register_view(request):
     else:
         form = UserCreationForm()
     return render(request, 'users/register.html', {'form': form})
+
+
+def delete_user_data_view(request):
+    user = request.user
+
+    # 注销用户
+    logout(request)
+    
+    user.delete()  # 删除用户
+
+    # 提示用户数据已删除
+    messages.success(request, "用户数据已删除并成功注销。")
+    
+    # 重定向到登录页面
+    return redirect('login')

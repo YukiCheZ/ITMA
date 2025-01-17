@@ -12,29 +12,98 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.js"></script>
     <script src='https://fullcalendar.io/js/fullcalendar-3.9.0/locale/zh-cn.js'></script>
+    <style>
+        /* 固定右上角的选择框 */
+        #contentSelectorWrapper {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            /* 设置较高的层级，确保其位于其他内容之上 */
+        }
+    
+        /* 右侧内容区域 */
+        .content-area {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    
+        /* 页面内容居中 */
+        .container {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+    
+        /* 页面中央内容的容器 */
+        .center-content {
+            max-width: 600px;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+    
+        /* 登出按钮固定在右上角 */
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: -180px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+    
+        /* 登出按钮悬浮效果 */
+        .logout-btn:hover {
+            background-color: #45a049;
+        }
+    
+        /* 注销账户按钮固定在右上角，和登出按钮相同位置 */
+        .delete-btn {
+            position: absolute;
+            top: 20px;
+            right: -80px;
+            /* 调整位置，避免重叠 */
+            background-color: #f44336;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+    
+        /* 注销账户按钮悬浮效果 */
+        .delete-btn:hover {
+            background-color: #e53935;
+        }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
-        <div class="row">
-            <!-- 左侧菜单 -->
-            <div class="col-3">
-                <h3>请选择内容</h3>
-                <select id="contentSelector" class="form-select">
-                    <option value="defalt_option">未选择</option>
-                    <option value="taskcalendar">计划表</option>
-                    <option value="llmagent">智能助手</option>
-                </select>
-            </div>
+        <div id="contentSelectorWrapper">
+            <!-- <h3>请选择内容</h3> -->
+            <select id="contentSelector" class="form-select">
+                <option value="home">主页</option>
+                <option value="taskcalendar">计划表</option>
+                <option value="llmagent">智能助手</option>
+            </select>
+        </div>
 
-            <!-- 右侧内容 -->
-            <div class="col-9">
-                <div id="dynamicContent">
-                    {% block content %}
-                    {% endblock %}
-                </div>
+        <!-- 右侧内容 -->
+        <div class="content-area">
+            <div id="dynamicContent">
+                {% block content %}
+                {% endblock %}
             </div>
         </div>
     </div>
+
     <script>
         $(document).ready(function() {
             $('#contentSelector').change(function() {
@@ -43,8 +112,5 @@
             });
         });
     </script>
-    
-    
-    
 </body>
 </html>

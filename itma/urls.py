@@ -15,6 +15,7 @@ urlpatterns = [
     path('login/', system_views.login_view, name='login'),
     path('logout/', system_views.logout_view, name='logout'),
     path('register/', system_views.register_view, name='register'),
+    path('delete_user_data/', system_views.delete_user_data_view, name='delete_user_data'),
     
     path('taskcalendar/', taskcalendar_views.taskcalendar, name='taskcalendar'),
     path('all_events/', taskcalendar_views.all_events, name='all_events'),
